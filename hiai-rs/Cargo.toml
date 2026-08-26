@@ -1,0 +1,15 @@
+[package]
+name = "hiai-rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Safe Rust bindings for Huawei Ascend NPUs using the HiAI (CANN) DDK on OpenHarmony"
+readme = "../README.md"
+keywords = ["ascend", "cann", "hiai", "npu", "huawei", "inference"]
+categories = ["api-bindings", "hardware-support"]
+
+[dependencies]
+hiai-rs-sys = { path = "../hiai-rs-sys" }
+thiserror = "2.0"
