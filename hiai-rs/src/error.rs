@@ -76,6 +76,10 @@ pub enum Error {
     /// The caller's output buffer is too small for the tensor.
     #[error("output buffer is too small")]
     OutputBufferTooSmall,
+
+    /// The `TensorDesc.dtype` value is not a known CANN data-type code.
+    #[error("invalid CANN data type: {value}")]
+    InvalidDataType { value: i32 },
 }
 
 #[cfg(test)]

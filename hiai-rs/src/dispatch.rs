@@ -24,14 +24,42 @@ pub struct TensorDesc {
     pub dtype: i32,
 }
 
-/// Reinterpret an `i32` CANN data-type value as the bindgen enum.
+/// Maps a raw `CANN_DT_*` integer to the bindgen `ddk_CannDataType` enum.
 ///
-/// `ddk_CannDataType` is `#[repr(u32)]` and all `CANN_DT_*` values are
-/// non-negative, so this is sound for every value produced by the caller.
-fn data_type(value: i32) -> ddk_CannDataType {
-    // SAFETY: `ddk_CannDataType` is `#[repr(u32)]` and all `CANN_DT_*` values
-    // are non-negative, so this is sound for every valid CANN data-type value.
-    unsafe { std::mem::transmute::<u32, ddk_CannDataType>(value as u32) }
+/// Uses an explicit match (no `transmute`) so an out-of-range or negative value
+/// from the caller yields an error instead of an invalid enum value.
+fn data_type(value: i32) -> Result<ddk_CannDataType> {
+    match value {
+        0 => Ok(ddk_CannDataType::CANN_DT_FLOAT),
+        1 => Ok(ddk_CannDataType::CANN_DT_FLOAT16),
+        2 => Ok(ddk_CannDataType::CANN_DT_INT8),
+        3 => Ok(ddk_CannDataType::CANN_DT_INT32),
+        4 => Ok(ddk_CannDataType::CANN_DT_UINT8),
+        6 => Ok(ddk_CannDataType::CANN_DT_INT16),
+        7 => Ok(ddk_CannDataType::CANN_DT_UINT16),
+        8 => Ok(ddk_CannDataType::CANN_DT_UINT32),
+        9 => Ok(ddk_CannDataType::CANN_DT_INT64),
+        10 => Ok(ddk_CannDataType::CANN_DT_UINT64),
+        11 => Ok(ddk_CannDataType::CANN_DT_DOUBLE),
+        12 => Ok(ddk_CannDataType::CANN_DT_BOOL),
+        13 => Ok(ddk_CannDataType::CANN_DT_DUAL),
+        14 => Ok(ddk_CannDataType::CANN_DT_DUAL_SUB_INT8),
+        15 => Ok(ddk_CannDataType::CANN_DT_DUAL_SUB_UINT8),
+        16 => Ok(ddk_CannDataType::CANN_DT_COMPLEX64),
+        17 => Ok(ddk_CannDataType::CANN_DT_UNDEFINED),
+        21 => Ok(ddk_CannDataType::CANN_DT_2BIT),
+        22 => Ok(ddk_CannDataType::CANN_DT_INT4),
+        23 => Ok(ddk_CannDataType::CANN_DT_QUINT8),
+        24 => Ok(ddk_CannDataType::CANN_DT_RESOURCE),
+        25 => Ok(ddk_CannDataType::CANN_DT_3BIT),
+        26 => Ok(ddk_CannDataType::CANN_DT_UINT2),
+        27 => Ok(ddk_CannDataType::CANN_DT_UINT4),
+        28 => Ok(ddk_CannDataType::CANN_DT_STRING),
+        35 => Ok(ddk_CannDataType::CANN_DT_FLOAT8_E5M2),
+        40 => Ok(ddk_CannDataType::CANN_DT_FLOAT4_E2M1),
+        41 => Ok(ddk_CannDataType::CANN_DT_MAX),
+        _ => Err(Error::InvalidDataType { value }),
+    }
 }
 
 /// Defines a RAII guard for a raw CANN handle: it owns the handle and destroys
@@ -97,7 +125,8 @@ raw_handle!(
 /// - `inputs`: input tensors, in the model's canonical input order.
 /// - `outputs`: output tensors, in the model's canonical output order. Each
 ///   entry's `data` buffer must be large enough to receive the output; on
-///   success it is overwritten with the computed values.
+///   success it is truncated to the actual output size and overwritten with
+///   the computed values.
 pub fn dispatch(
     model_bytes: &[u8],
     inputs: &[TensorDesc],
@@ -175,7 +204,7 @@ pub fn dispatch(
         let tensor = IoTensor::new(unsafe { ddk_cann_io_tensor_create() })
             .ok_or(Error::Null { what: "IO tensor" })?;
 
-        let dtype = data_type(input.dtype);
+        let dtype = data_type(input.dtype)?;
         let status = unsafe { ddk_cann_io_tensor_init(tensor.as_ptr(), dimension.as_ptr(), dtype) };
         if status != 0 {
             return Err(Error::Cann {
@@ -215,7 +244,7 @@ pub fn dispatch(
         let tensor = IoTensor::new(unsafe { ddk_cann_io_tensor_create() })
             .ok_or(Error::Null { what: "IO tensor" })?;
 
-        let dtype = data_type(output.dtype);
+        let dtype = data_type(output.dtype)?;
         let status = unsafe { ddk_cann_io_tensor_init(tensor.as_ptr(), dimension.as_ptr(), dtype) };
         if status != 0 {
             return Err(Error::Cann {
@@ -278,8 +307,38 @@ pub fn dispatch(
         // SAFETY: `buffer` is non-null and `ddk_cann_io_tensor_get_size` reports
         // `actual` bytes of valid memory for this tensor.
         let source = unsafe { std::slice::from_raw_parts(buffer as *const u8, actual) };
-        output.data[..actual].copy_from_slice(source);
+        // Trim the caller's buffer to the actual output size so no stale bytes
+        // remain past the end of the produced tensor.
+        output.data.truncate(actual);
+        output.data.copy_from_slice(source);
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn data_type_maps_valid_codes() {
+        assert_eq!(data_type(0).unwrap(), ddk_CannDataType::CANN_DT_FLOAT);
+        assert_eq!(data_type(1).unwrap(), ddk_CannDataType::CANN_DT_FLOAT16);
+        assert_eq!(
+            data_type(15).unwrap(),
+            ddk_CannDataType::CANN_DT_DUAL_SUB_UINT8
+        );
+    }
+
+    #[test]
+    fn data_type_rejects_invalid_codes() {
+        assert!(matches!(
+            data_type(-1),
+            Err(Error::InvalidDataType { value: -1 })
+        ));
+        assert!(matches!(
+            data_type(9999),
+            Err(Error::InvalidDataType { value: 9999 })
+        ));
+    }
 }
