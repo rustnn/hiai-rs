@@ -84,9 +84,11 @@ CannOperatorHandle cann_operator_create_registered(const char* op_type_name, con
     if (type == "Round")  return FromGeOp(new hiai::op::Round(name));
 
     // ── Activations ──────────────────────────────────────────────
-    // Activation modes (set by the converter via the "mode" attr):
-    //   0=Sigmoid, 1=ReLU, 2=Tanh, 5=LeakyReLU, 6=Abs, 15=GELU.
-    // (ELU/Softplus/Softsign/HardSigmoid use their own Activation modes.)
+    // Activation modes (set by the converter via the "mode" attr),
+    // per hiai::op::Activation in graph/op/nn_defs.h:
+    //   0=Sigmoid, 1=ReLU, 2=Tanh, 3=ClippedReLU, 4=ELU, 5=LeakyReLU,
+    //   6=Abs, 7=Relu1, 8=Softsign, 9=Softplus, 10=Hardsigmoid,
+    //   11=ThresholdReLU, 12=Selu, 14=Relu6, 15=GeLU.
     if (type == "ReLU" || type == "Sigmoid" || type == "Tanh" ||
         type == "ELU" || type == "GELU" || type == "LeakyRelu" ||
         type == "HardSigmoid" || type == "Softplus" || type == "Softsign")

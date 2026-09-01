@@ -106,24 +106,6 @@ typedef struct {
     uint32_t length;
 } CannModelBuffer;
 
-/* ── Activation mode (for activation operator) ────────────────────────── */
-
-typedef enum {
-    CANN_ACTIVATION_SIGMOID  = 0,
-    CANN_ACTIVATION_RELU     = 1,
-    CANN_ACTIVATION_TANH     = 2,
-    CANN_ACTIVATION_GELU     = 3,
-    CANN_ACTIVATION_LEAKY_RELU = 5,
-    CANN_ACTIVATION_ELU      = 6,
-    CANN_ACTIVATION_SELU     = 7,
-    CANN_ACTIVATION_SOFTPLUS = 8,
-    CANN_ACTIVATION_SOFTSIGN = 9,
-    CANN_ACTIVATION_HSIGMOID = 10,
-    CANN_ACTIVATION_RELU6    = 12,
-    CANN_ACTIVATION_ABS      = 13,
-    CANN_ACTIVATION_SWISH    = 14
-} CannActivationMode;
-
 /* ── Pooling mode ─────────────────────────────────────────────────────── */
 
 typedef enum {
