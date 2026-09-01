@@ -42,10 +42,12 @@ static CannFormat FromGeFormat(ge::Format f) {
 CannOpTensorDescHandle cann_tensor_desc_create(CannShapeHandle shape,
                                               CannFormat format,
                                               CannDataType dtype) {
+    CANN_TRY
     if (!shape) return nullptr;
     ge::Shape geShape(shape->shape);
 
     return new CannOpTensorDescImpl{ge::TensorDesc(geShape, ToGeFormat(format), ToGeDataType(dtype))};
+    CANN_CATCH_HANDLE
 }
 
 void cann_tensor_desc_destroy(CannOpTensorDescHandle desc) {
@@ -57,32 +59,40 @@ void cann_tensor_desc_destroy(CannOpTensorDescHandle desc) {
 CannStatus cann_tensor_desc_set_shape(CannOpTensorDescHandle desc,
                                        const int64_t* shape,
                                        int32_t shape_count) {
+    CANN_TRY
     if (!desc || !shape || shape_count <= 0) return kInvalidPara;
     std::vector<int64_t> s(shape, shape + shape_count);
     desc->desc.SetShape(ge::Shape(s));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_tensor_desc_set_format(CannOpTensorDescHandle desc, CannFormat format) {
+    CANN_TRY
     if (!desc) return kInvalidPtr;
     desc->desc.SetFormat(ToGeFormat(format));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_tensor_desc_set_data_type(CannOpTensorDescHandle desc, CannDataType dtype) {
+    CANN_TRY
     if (!desc) return kInvalidPtr;
     desc->desc.SetDataType(ToGeDataType(dtype));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ── TensorDesc property getters ───────────────────────────────────────── */
 
 const int64_t* cann_tensor_desc_get_shape(CannOpTensorDescHandle desc,
                                            int32_t* out_shape_count) {
+    CANN_TRY
     if (!desc || !out_shape_count) return nullptr;
     const std::vector<int64_t>& dims = desc->desc.GetShape().GetDims();
     *out_shape_count = static_cast<int32_t>(dims.size());
     return dims.data();
+    CANN_CATCH_HANDLE
 }
 
 CannFormat cann_tensor_desc_get_format(CannOpTensorDescHandle desc) {
@@ -98,27 +108,35 @@ CannDataType cann_tensor_desc_get_data_type(CannOpTensorDescHandle desc) {
 /* ── TensorDesc advanced accessors ───────────────────────────────────────── */
 
 CannShapeHandle cann_tensor_desc_get_shape_handle(CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!desc) return nullptr;
     return new CannShapeImpl(desc->desc.GetShape());
+    CANN_CATCH_HANDLE
 }
 
 CannStatus cann_tensor_desc_set_shape_from_handle(CannOpTensorDescHandle desc,
                                                    CannShapeHandle shape) {
+    CANN_TRY
     if (!desc || !shape) return kInvalidPtr;
     desc->desc.SetShape(shape->shape);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannShapeHandle cann_tensor_desc_get_origin_shape(CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!desc) return nullptr;
     return new CannShapeImpl(desc->desc.GetOriginShape());
+    CANN_CATCH_HANDLE
 }
 
 CannStatus cann_tensor_desc_set_origin_shape(CannOpTensorDescHandle desc,
                                               CannShapeHandle shape) {
+    CANN_TRY
     if (!desc || !shape) return kInvalidPtr;
     desc->desc.SetOriginShape(shape->shape);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannFormat cann_tensor_desc_get_origin_format(CannOpTensorDescHandle desc) {
@@ -128,9 +146,11 @@ CannFormat cann_tensor_desc_get_origin_format(CannOpTensorDescHandle desc) {
 
 CannStatus cann_tensor_desc_set_origin_format(CannOpTensorDescHandle desc,
                                                CannFormat format) {
+    CANN_TRY
     if (!desc) return kInvalidPtr;
     desc->desc.SetOriginFormat(ToGeFormat(format));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannDataType cann_tensor_desc_get_origin_data_type(CannOpTensorDescHandle desc) {
@@ -140,21 +160,27 @@ CannDataType cann_tensor_desc_get_origin_data_type(CannOpTensorDescHandle desc) 
 
 CannStatus cann_tensor_desc_set_origin_data_type(CannOpTensorDescHandle desc,
                                                   CannDataType dtype) {
+    CANN_TRY
     if (!desc) return kInvalidPtr;
     desc->desc.SetOriginDatatype(ToGeDataType(dtype));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ── Shape lifecycle ────────────────────────────────────────────────────── */
 
 CannShapeHandle cann_shape_create(const int64_t* dims, int32_t dim_count) {
+    CANN_TRY
     if (!dims || dim_count <= 0) return nullptr;
     std::vector<int64_t> v(dims, dims + dim_count);
     return new CannShapeImpl(v);
+    CANN_CATCH_HANDLE
 }
 
 CannShapeHandle cann_shape_create_default(void) {
+    CANN_TRY
     return new CannShapeImpl();
+    CANN_CATCH_HANDLE
 }
 
 void cann_shape_destroy(CannShapeHandle shape) {
@@ -172,16 +198,20 @@ int64_t cann_shape_get_dim(CannShapeHandle shape, int32_t idx) {
 }
 
 CannStatus cann_shape_set_dim(CannShapeHandle shape, int32_t idx, int64_t value) {
+    CANN_TRY
     if (!shape || idx < 0) return kInvalidPara;
     ge::GraphErrCodeStatus ret = shape->shape.SetDim(static_cast<size_t>(idx), value);
     return (ret == ge::GRAPH_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 const int64_t* cann_shape_get_dims(CannShapeHandle shape, int32_t* out_count) {
+    CANN_TRY
     if (!shape || !out_count) return nullptr;
     const std::vector<int64_t>& dims = shape->shape.GetDims();
     *out_count = static_cast<int32_t>(dims.size());
     return dims.data();
+    CANN_CATCH_HANDLE
 }
 
 int64_t cann_shape_get_total_dim_num(CannShapeHandle shape) {
@@ -197,9 +227,11 @@ uint32_t cann_shape_get_shape_size(CannShapeHandle shape) {
 /* ── Tensor lifecycle ──────────────────────────────────────────────────── */
 
 CannOpTensorHandle cann_op_tensor_create(CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!desc) return nullptr;
     auto* t = new CannOpTensorImpl(desc->desc);
     return reinterpret_cast<CannOpTensorHandle>(t);
+    CANN_CATCH_HANDLE
 }
 
 void cann_op_tensor_destroy(CannOpTensorHandle tensor) {
@@ -209,20 +241,24 @@ void cann_op_tensor_destroy(CannOpTensorHandle tensor) {
 /* ── Tensor data access ────────────────────────────────────────────────── */
 
 CannOpTensorDescHandle cann_op_tensor_get_desc(CannOpTensorHandle tensor) {
+    CANN_TRY
     if (!tensor) return nullptr;
     auto* t = reinterpret_cast<CannOpTensorImpl*>(tensor);
     return new CannOpTensorDescImpl{t->tensor.GetTensorDesc()};
+    CANN_CATCH_HANDLE
 }
 
 CannStatus cann_op_tensor_set_data(CannOpTensorHandle tensor,
                                  const void* data,
                                  uint32_t size) {
+    CANN_TRY
     if (!tensor || !data) return kInvalidPtr;
     auto* t = reinterpret_cast<CannOpTensorImpl*>(tensor);
     ge::GraphErrCodeStatus ret = t->tensor.SetData(static_cast<const uint8_t*>(data), size);
     if (ret != ge::GRAPH_SUCCESS) return kFailed;
 
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 }  // extern "C"

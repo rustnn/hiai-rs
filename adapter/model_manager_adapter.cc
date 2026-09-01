@@ -28,9 +28,11 @@ CannModelDescHandle cann_model_desc_create(const char* name,
                                              int32_t framework,
                                              int32_t model_type,
                                              int32_t device_type) {
+    CANN_TRY
     if (!name) return nullptr;
     return new CannModelDescImpl(std::string(name), frequency, framework,
                                   model_type, device_type);
+    CANN_CATCH_HANDLE
 }
 
 void cann_model_desc_destroy(CannModelDescHandle desc) {
@@ -38,25 +40,30 @@ void cann_model_desc_destroy(CannModelDescHandle desc) {
 }
 
 const char* cann_model_desc_get_name(CannModelDescHandle desc) {
+    CANN_TRY
     if (!desc) return nullptr;
     std::string name = desc->desc->GetName();
     char* buf = static_cast<char*>(std::malloc(name.size() + 1));
     if (!buf) return nullptr;
     std::memcpy(buf, name.c_str(), name.size() + 1);
     return buf; /* Caller must free with cann_string_free() */
+    CANN_CATCH_HANDLE
 }
 
 CannStatus cann_model_desc_set_model_buffer(CannModelDescHandle desc,
                                               const void* data,
                                               uint32_t size) {
+    CANN_TRY
     if (!desc || !data || size == 0) return kInvalidPara;
     hiai::AIStatus ret = desc->desc->SetModelBuffer(data, size);
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_set_input_dims(CannModelDescHandle desc,
                                             CannIOTensorDimensionHandle* dims,
                                             int32_t dim_count) {
+    CANN_TRY
     if (!desc || !dims || dim_count <= 0) return kInvalidPara;
     std::vector<hiai::TensorDimension> hDims;
     hDims.reserve(static_cast<size_t>(dim_count));
@@ -66,11 +73,13 @@ CannStatus cann_model_desc_set_input_dims(CannModelDescHandle desc,
     }
     hiai::AIStatus ret = desc->desc->SetInputDims(hDims);
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_set_dynamic_shape(CannModelDescHandle desc,
                                                int32_t enable,
                                                uint32_t max_cached_num) {
+    CANN_TRY
     if (!desc) return kInvalidPtr;
     hiai::DynamicShapeConfig config;
     config.enable = (enable != 0);
@@ -78,11 +87,13 @@ CannStatus cann_model_desc_set_dynamic_shape(CannModelDescHandle desc,
     config.cacheMode = hiai::CACHE_BUILDED_MODEL;
     hiai::AIStatus ret = desc->desc->SetDynamicShapeConfig(config);
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_get_dynamic_shape_config(CannModelDescHandle desc,
                                                       int32_t* out_enable,
                                                       uint32_t* out_max_cached_num) {
+    CANN_TRY
     if (!desc || !out_enable || !out_max_cached_num) return kInvalidPtr;
     hiai::DynamicShapeConfig config;
     hiai::AIStatus ret = desc->desc->GetDynamicShapeConfig(config);
@@ -90,12 +101,14 @@ CannStatus cann_model_desc_get_dynamic_shape_config(CannModelDescHandle desc,
     *out_enable = config.enable ? 1 : 0;
     *out_max_cached_num = config.maxCachedNum;
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_get_input_dims(CannModelDescHandle desc,
                                             CannIOTensorDimensionHandle* dims,
                                             int32_t max_dims,
                                             int32_t* out_dim_count) {
+    CANN_TRY
     if (!desc || !dims || max_dims <= 0 || !out_dim_count) return kInvalidPara;
     std::vector<hiai::TensorDimension> hDims;
     hiai::AIStatus ret = desc->desc->GetInputDims(hDims);
@@ -105,45 +118,56 @@ CannStatus cann_model_desc_get_input_dims(CannModelDescHandle desc,
         dims[i] = new CannIOTensorDimImpl(hDims[i]);
     }
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_set_precision_mode(CannModelDescHandle desc,
                                                 int32_t precision_mode) {
+    CANN_TRY
     if (!desc) return kInvalidPtr;
     hiai::AIStatus ret = desc->desc->SetPrecisionMode(
         static_cast<hiai::PrecisionMode>(precision_mode));
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_get_precision_mode(CannModelDescHandle desc,
                                                 int32_t* out_precision_mode) {
+    CANN_TRY
     if (!desc || !out_precision_mode) return kInvalidPtr;
     hiai::PrecisionMode mode;
     hiai::AIStatus ret = desc->desc->GetPrecisionMode(mode);
     if (ret != hiai::AI_SUCCESS) return kFailed;
     *out_precision_mode = static_cast<int32_t>(mode);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_set_tuning_strategy(CannModelDescHandle desc,
                                                  int32_t strategy) {
+    CANN_TRY
     if (!desc) return kInvalidPtr;
     hiai::AIStatus ret = desc->desc->SetTuningStrategy(
         static_cast<hiai::TuningStrategy>(strategy));
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_desc_get_tuning_strategy(CannModelDescHandle desc,
                                                  int32_t* out_strategy) {
+    CANN_TRY
     if (!desc || !out_strategy) return kInvalidPtr;
     *out_strategy = static_cast<int32_t>(desc->desc->GetTuningStrategy());
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ── Model Manager Client ───────────────────────────────────────────────── */
 
 CannModelManagerHandle cann_model_manager_create(void) {
+    CANN_TRY
     return reinterpret_cast<CannModelManagerHandle>(new CannModelMgrImpl());
+    CANN_CATCH_HANDLE
 }
 
 void cann_model_manager_destroy(CannModelManagerHandle manager) {
@@ -151,15 +175,18 @@ void cann_model_manager_destroy(CannModelManagerHandle manager) {
 }
 
 CannStatus cann_model_manager_init(CannModelManagerHandle manager) {
+    CANN_TRY
     if (!manager) return kInvalidPtr;
     hiai::AIStatus ret =
         reinterpret_cast<CannModelMgrImpl*>(manager)->client.Init(nullptr);
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_manager_load(CannModelManagerHandle manager,
                                      CannModelDescHandle* descs,
                                      int32_t desc_count) {
+    CANN_TRY
     if (!manager || !descs || desc_count <= 0) return kInvalidPara;
     auto* mgr = reinterpret_cast<CannModelMgrImpl*>(manager);
     std::vector<std::shared_ptr<hiai::AiModelDescription>> hDescs;
@@ -169,6 +196,7 @@ CannStatus cann_model_manager_load(CannModelManagerHandle manager,
     }
     hiai::AIStatus ret = mgr->client.Load(hDescs);
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_manager_process(
@@ -180,6 +208,7 @@ CannStatus cann_model_manager_process(
     int32_t output_count,
     uint32_t timeout,
     int32_t* out_stamp) {
+    CANN_TRY
     if (!manager || !context || !inputs || !outputs || !out_stamp)
         return kInvalidPtr;
     if (input_count <= 0 || output_count <= 0) return kInvalidPara;
@@ -207,16 +236,20 @@ CannStatus cann_model_manager_process(
     *out_stamp = stamp;
 
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_manager_unload(CannModelManagerHandle manager) {
+    CANN_TRY
     if (!manager) return kInvalidPtr;
     hiai::AIStatus ret =
         reinterpret_cast<CannModelMgrImpl*>(manager)->client.UnLoadModel();
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 const char* cann_model_manager_get_version(CannModelManagerHandle manager) {
+    CANN_TRY
     if (!manager) return nullptr;
     const char* version =
         reinterpret_cast<CannModelMgrImpl*>(manager)->client.GetVersion();
@@ -226,18 +259,21 @@ const char* cann_model_manager_get_version(CannModelManagerHandle manager) {
     if (!buf) return nullptr;
     std::memcpy(buf, version, len + 1);
     return buf; /* Caller must free with cann_string_free() */
+    CANN_CATCH_HANDLE
 }
 
 CannStatus cann_model_manager_check_compatibility(
     CannModelManagerHandle manager,
     CannModelDescHandle desc,
     int32_t* out_compatible) {
+    CANN_TRY
     if (!manager || !desc || !out_compatible) return kInvalidPtr;
     auto* mgr = reinterpret_cast<CannModelMgrImpl*>(manager);
     bool compatible = false;
     hiai::AIStatus ret = mgr->client.CheckModelCompatibility(*(desc->desc), compatible);
     *out_compatible = compatible ? 1 : 0;
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_manager_get_model_io_tensor_dim(
@@ -249,6 +285,7 @@ CannStatus cann_model_manager_get_model_io_tensor_dim(
     CannIOTensorDimensionHandle* output_dims,
     int32_t max_output_dims,
     int32_t* out_output_dim_count) {
+    CANN_TRY
     if (!manager || !model_name || !out_input_dim_count || !out_output_dim_count)
         return kInvalidPtr;
     auto* mgr = reinterpret_cast<CannModelMgrImpl*>(manager);
@@ -269,17 +306,20 @@ CannStatus cann_model_manager_get_model_io_tensor_dim(
             output_dims[i] = new CannIOTensorDimImpl(outDims[i]);
     }
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_model_manager_set_priority(
     CannModelManagerHandle manager,
     const char* model_name,
     int32_t priority) {
+    CANN_TRY
     if (!manager || !model_name) return kInvalidPtr;
     auto* mgr = reinterpret_cast<CannModelMgrImpl*>(manager);
     hiai::AIStatus ret = mgr->client.SetModelPriority(
         std::string(model_name), static_cast<hiai::ModelPriority>(priority));
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 }  // extern "C"

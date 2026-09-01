@@ -57,8 +57,10 @@ static hiai::HIAI_DataType ToHiaiDataType(CannDataType t) {
 /* ── Tensor lifecycle ──────────────────────────────────────────────────── */
 
 CannIOTensorHandle cann_io_tensor_create() {
+    CANN_TRY
     auto* t = new CannIOTensorImpl();
     return reinterpret_cast<CannIOTensorHandle>(t);
+    CANN_CATCH_HANDLE
 }
 
 
@@ -71,6 +73,7 @@ void cann_io_tensor_destroy(CannIOTensorHandle tensor) {
 CannStatus cann_io_tensor_set_data(CannIOTensorHandle tensor,
                                  const void* data,
                                  uint32_t size) {
+    CANN_TRY
     if (!tensor || !data) return kInvalidPtr;
     auto* t = reinterpret_cast<CannIOTensorImpl*>(tensor);
     void* buf = t->tensor->GetBuffer();
@@ -79,11 +82,14 @@ CannStatus cann_io_tensor_set_data(CannIOTensorHandle tensor,
     uint32_t copySize = (size < bufSize) ? size : bufSize;
     std::memcpy(buf, data, copySize);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 void* cann_io_tensor_get_buffer(CannIOTensorHandle tensor) {
+    CANN_TRY
     if (!tensor) return nullptr;
     return reinterpret_cast<CannIOTensorImpl*>(tensor)->tensor->GetBuffer();
+    CANN_CATCH_HANDLE
 }
 
 uint32_t cann_io_tensor_get_size(CannIOTensorHandle tensor) {
@@ -98,6 +104,7 @@ uint32_t cann_io_tensor_get_size(CannIOTensorHandle tensor) {
 CannStatus cann_io_tensor_init(CannIOTensorHandle tensor,
                               CannIOTensorDimensionHandle dim,
                               CannDataType dtype) {
+    CANN_TRY
     if (!tensor || !dim) return kInvalidPtr;
     auto* t = reinterpret_cast<CannIOTensorImpl*>(tensor);
     hiai::AIStatus ret = t->tensor->Init(&dim->dim, ToHiaiDataType(dtype));
@@ -105,12 +112,14 @@ CannStatus cann_io_tensor_init(CannIOTensorHandle tensor,
         t->dim = dim->dim;
     }
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_io_tensor_init_with_data(CannIOTensorHandle tensor,
                                         const void* data,
                                         CannIOTensorDimensionHandle dim,
                                         CannDataType dtype) {
+    CANN_TRY
     if (!tensor || !data || !dim) return kInvalidPtr;
     auto* t = reinterpret_cast<CannIOTensorImpl*>(tensor);
     hiai::AIStatus ret = t->tensor->Init(data, &dim->dim, ToHiaiDataType(dtype));
@@ -118,36 +127,45 @@ CannStatus cann_io_tensor_init_with_data(CannIOTensorHandle tensor,
         t->dim = dim->dim;
     }
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 /* ── Tensor Dimension access ──────────────────────────────────────────── */
 
 CannStatus cann_io_tensor_set_tensor_dimension(CannIOTensorHandle tensor,
                                               CannIOTensorDimensionHandle dim) {
+    CANN_TRY
     if (!tensor || !dim) return kInvalidPtr;
     auto* t = reinterpret_cast<CannIOTensorImpl*>(tensor);
     hiai::AIStatus ret = t->tensor->SetTensorDimension(&dim->dim);
     return (ret == hiai::AI_SUCCESS) ? kSuccess : kFailed;
+    CANN_CATCH_STATUS
 }
 
 CannIOTensorDimensionHandle cann_io_tensor_get_tensor_dimension(CannIOTensorHandle tensor) {
+    CANN_TRY
     if (!tensor) return nullptr;
     auto* t = reinterpret_cast<CannIOTensorImpl*>(tensor);
     return new CannIOTensorDimImpl(t->tensor->GetTensorDimension());
+    CANN_CATCH_HANDLE
 }
 
 /* ── TensorDimension lifecycle ──────────────────────────────────────────── */
 
 CannIOTensorDimensionHandle cann_io_tensor_dim_create(uint32_t n, uint32_t c,
                                                    uint32_t h, uint32_t w) {
+    CANN_TRY
     return new CannIOTensorDimImpl(n, c, h, w);
+    CANN_CATCH_HANDLE
 }
 
 CannIOTensorDimensionHandle cann_io_tensor_dim_create_nd(const uint32_t* dims,
                                                       int32_t dim_count) {
+    CANN_TRY
     if (!dims || dim_count <= 0) return nullptr;
     std::vector<uint32_t> v(dims, dims + dim_count);
     return new CannIOTensorDimImpl(v);
+    CANN_CATCH_HANDLE
 }
 
 void cann_io_tensor_dim_destroy(CannIOTensorDimensionHandle dim) {
@@ -155,7 +173,9 @@ void cann_io_tensor_dim_destroy(CannIOTensorDimensionHandle dim) {
 }
 
 void cann_io_tensor_dim_set_number(CannIOTensorDimensionHandle dim, uint32_t n) {
+    CANN_TRY
     if (dim) dim->dim.SetNumber(n);
+    CANN_CATCH_VOID
 }
 
 uint32_t cann_io_tensor_dim_get_number(CannIOTensorDimensionHandle dim) {
@@ -163,7 +183,9 @@ uint32_t cann_io_tensor_dim_get_number(CannIOTensorDimensionHandle dim) {
 }
 
 void cann_io_tensor_dim_set_channel(CannIOTensorDimensionHandle dim, uint32_t c) {
+    CANN_TRY
     if (dim) dim->dim.SetChannel(c);
+    CANN_CATCH_VOID
 }
 
 uint32_t cann_io_tensor_dim_get_channel(CannIOTensorDimensionHandle dim) {
@@ -171,7 +193,9 @@ uint32_t cann_io_tensor_dim_get_channel(CannIOTensorDimensionHandle dim) {
 }
 
 void cann_io_tensor_dim_set_height(CannIOTensorDimensionHandle dim, uint32_t h) {
+    CANN_TRY
     if (dim) dim->dim.SetHeight(h);
+    CANN_CATCH_VOID
 }
 
 uint32_t cann_io_tensor_dim_get_height(CannIOTensorDimensionHandle dim) {
@@ -179,7 +203,9 @@ uint32_t cann_io_tensor_dim_get_height(CannIOTensorDimensionHandle dim) {
 }
 
 void cann_io_tensor_dim_set_width(CannIOTensorDimensionHandle dim, uint32_t w) {
+    CANN_TRY
     if (dim) dim->dim.SetWidth(w);
+    CANN_CATCH_VOID
 }
 
 uint32_t cann_io_tensor_dim_get_width(CannIOTensorDimensionHandle dim) {

@@ -20,8 +20,10 @@ extern "C" {
 /* ── Context lifecycle ──────────────────────────────────────────────────── */
 
 CannContextHandle cann_context_create() {
+    CANN_TRY
     auto* ctx = new CannContextImpl();
     return reinterpret_cast<CannContextHandle>(ctx);
+    CANN_CATCH_HANDLE
 }
 
 void cann_context_destroy(CannContextHandle context) {
@@ -33,14 +35,17 @@ void cann_context_destroy(CannContextHandle context) {
 CannStatus cann_context_set_para(CannContextHandle context,
                                    const char* key,
                                    const char* value) {
+    CANN_TRY
     if (!context || !key || !value) return kInvalidPtr;
     reinterpret_cast<CannContextImpl*>(context)->context.SetPara(
         std::string(key), std::string(value));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 const char* cann_context_get_para(CannContextHandle context,
                                     const char* key) {
+    CANN_TRY
     if (!context || !key) return nullptr;
     std::string val =
         reinterpret_cast<CannContextImpl*>(context)->context.GetPara(std::string(key));
@@ -49,34 +54,42 @@ const char* cann_context_get_para(CannContextHandle context,
     if (!buf) return nullptr;
     std::memcpy(buf, val.c_str(), val.size() + 1);
     return buf; /* Caller must free with cann_string_free() */
+    CANN_CATCH_HANDLE
 }
 
 CannStatus cann_context_add_para(CannContextHandle context,
                                    const char* key,
                                    const char* value) {
+    CANN_TRY
     if (!context || !key || !value) return kInvalidPtr;
     reinterpret_cast<CannContextImpl*>(context)->context.AddPara(
         std::string(key), std::string(value));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_context_del_para(CannContextHandle context,
                                    const char* key) {
+    CANN_TRY
     if (!context || !key) return kInvalidPtr;
     reinterpret_cast<CannContextImpl*>(context)->context.DelPara(std::string(key));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_context_clear_para(CannContextHandle context) {
+    CANN_TRY
     if (!context) return kInvalidPtr;
     reinterpret_cast<CannContextImpl*>(context)->context.ClearPara();
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_context_get_all_keys(CannContextHandle context,
                                        char** keys,
                                        int32_t max_keys,
                                        int32_t* out_key_count) {
+    CANN_TRY
     if (!context || !keys || max_keys <= 0 || !out_key_count)
         return kInvalidPara;
     std::vector<std::string> keyVec;
@@ -90,6 +103,7 @@ CannStatus cann_context_get_all_keys(CannContextHandle context,
         }
     }
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ── Shared string ownership ──────────────────────────────────────────── */

@@ -128,6 +128,42 @@ struct CannModelMgrImpl {
 //     }
 // };
 
+/* ── Exception-safety guards ───────────────────────────────────────────
+ * No C++ exception may propagate across an `extern "C"` boundary (that is
+ * undefined behavior). Every `cann_*` function opens with `CANN_TRY` and
+ * closes with the `CANN_CATCH_*` macro matching its return type.
+ * ────────────────────────────────────────────────────────────────────── */
+#define CANN_TRY try {
+#define CANN_CATCH_STATUS \
+    }                    \
+    catch (...) {        \
+        return kFailed;  \
+    }
+#define CANN_CATCH_HANDLE \
+    }                     \
+    catch (...) {         \
+        return nullptr;   \
+    }
+#define CANN_CATCH_VOID \
+    }                   \
+    catch (...) {       \
+    }
+#define CANN_CATCH_ZERO \
+    }                   \
+    catch (...) {       \
+        return 0;       \
+    }
+#define CANN_CATCH_FORMAT        \
+    }                            \
+    catch (...) {                \
+        return CANN_FORMAT_RESERVED; \
+    }
+#define CANN_CATCH_DATATYPE        \
+    }                              \
+    catch (...) {                  \
+        return CANN_DT_UNDEFINED;  \
+    }
+
 /* ── Utility inline converters ───────────────────────────────────────── */
 
 

@@ -29,9 +29,11 @@ extern "C" {
 /* ── Base Operator Lifecycle ──────────────────────────────────────────── */
 
 CannOperatorHandle cann_operator_create(const char* type, const char* name) {
+    CANN_TRY
     if (!type || !name) return nullptr;
     auto* op = new ge::Operator(std::string(name), std::string(type));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 
 /// Generic operator factory that creates the correct typed subclass
@@ -39,6 +41,7 @@ CannOperatorHandle cann_operator_create(const char* type, const char* name) {
 /// Needed because subclasses register type-specific inputs/outputs via
 /// HIAI_REG_OP macros that the base class skips.
 CannOperatorHandle cann_operator_create_registered(const char* op_type_name, const char* op_name) {
+    CANN_TRY
     if (!op_type_name || !op_name) return nullptr;
     std::string type(op_type_name);
     std::string name(op_name);
@@ -144,6 +147,7 @@ CannOperatorHandle cann_operator_create_registered(const char* op_type_name, con
     if (type == "QuantizeLinear") return FromGeOp(new hiai::op::QuantizeV2(name));
 
     return nullptr;
+    CANN_CATCH_HANDLE
 }
 
 void cann_operator_destroy(CannOperatorHandle op) {
@@ -151,9 +155,11 @@ void cann_operator_destroy(CannOperatorHandle op) {
 }
 
 CannOperatorHandle cann_operator_clone(CannOperatorHandle op) {
+    CANN_TRY
     if (!op) return nullptr;
     auto* new_op = new ge::Operator(*ToGeOp(op));
     return FromGeOp(new_op);
+    CANN_CATCH_HANDLE
 }
 
 /* ── Input/Output Connections ─────────────────────────────────────────── */
@@ -161,18 +167,22 @@ CannOperatorHandle cann_operator_clone(CannOperatorHandle op) {
 CannStatus cann_operator_set_input(CannOperatorHandle op,
                                     const char* name,
                                     CannOperatorHandle input_op) {
+    CANN_TRY
     if (!op || !name || !input_op) return kInvalidPtr;
     ToGeOp(op)->SetInput(std::string(name), *ToGeOp(input_op));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_input_by_index(CannOperatorHandle op,
                                               int32_t index,
                                               CannOperatorHandle input_op,
                                               int32_t input_index) {
+    CANN_TRY
     if (!op || !input_op || index < 0) return kInvalidPara;
     ToGeOp(op)->SetInput(index, *ToGeOp(input_op), input_index);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ── Attributes ──────────────────────────────────────────────────────── */
@@ -180,56 +190,68 @@ CannStatus cann_operator_set_input_by_index(CannOperatorHandle op,
 CannStatus cann_operator_set_attr_int64(CannOperatorHandle op,
                                           const char* name,
                                           int64_t value) {
+    CANN_TRY
     if (!op || !name) return kInvalidPtr;
     ToGeOp(op)->SetAttr(std::string(name), value);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_attr_float(CannOperatorHandle op,
                                           const char* name,
                                           float value) {
+    CANN_TRY
     if (!op || !name) return kInvalidPtr;
     ToGeOp(op)->SetAttr(std::string(name), value);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_attr_string(CannOperatorHandle op,
                                            const char* name,
                                            const char* value) {
+    CANN_TRY
     if (!op || !name || !value) return kInvalidPtr;
     ToGeOp(op)->SetAttr(std::string(name), std::string(value));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_attr_int64_list(CannOperatorHandle op,
                                                const char* name,
                                                const int64_t* values,
                                                int32_t count) {
+    CANN_TRY
     if (!op || !name || !values || count <= 0) return kInvalidPara;
     std::vector<int64_t> v(values, values + count);
     ToGeOp(op)->SetAttr(std::string(name), v);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_attr_float_list(CannOperatorHandle op,
                                                const char* name,
                                                const float* values,
                                                int32_t count) {
+    CANN_TRY
     if (!op || !name || !values || count <= 0) return kInvalidPara;
     std::vector<float> v(values, values + count);
     ToGeOp(op)->SetAttr(std::string(name), v);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_attr_tensor(CannOperatorHandle op,
                                           const char* name,
                                           CannOpTensorHandle tensor) {
+    CANN_TRY
     if (!op || !name || !tensor) return kInvalidPtr;
     ge::AttrValue attr_value = ge::AttrValue();
     // WARN: Memory model of tensor is unknown. // Here perhaps the tensor is recreated.
     attr_value.SetTensor(std::make_shared<ge::Tensor>(static_cast<CannOpTensorImpl*>(tensor)->tensor));
     ToGeOp(op)->SetAttr(std::string(name), std::move(attr_value));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 // Todo:: There are two types of tensor in Cann
@@ -243,6 +265,7 @@ CannStatus cann_operator_set_attr_tensor_raw(CannOperatorHandle op,
                                           const int64_t* shape,
                                           int32_t shape_count,
                                           CannDataType dtype) {
+    CANN_TRY
     if (!op || !name || !data || size == 0 || !shape || shape_count <= 0)
         return kInvalidPara;
     std::vector<int64_t> shape_vec(shape, shape + shape_count);
@@ -254,6 +277,7 @@ CannStatus cann_operator_set_attr_tensor_raw(CannOperatorHandle op,
     attr_value.SetTensor(tensor);
     ToGeOp(op)->SetAttr(std::string(name), std::move(attr_value));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_attr_tensor_raw_format(CannOperatorHandle op,
@@ -264,6 +288,7 @@ CannStatus cann_operator_set_attr_tensor_raw_format(CannOperatorHandle op,
                                           int32_t shape_count,
                                           CannDataType dtype,
                                           int32_t format) {
+    CANN_TRY
     if (!op || !name || !data || size == 0 || !shape || shape_count <= 0)
         return kInvalidPara;
     std::vector<int64_t> shape_vec(shape, shape + shape_count);
@@ -275,60 +300,73 @@ CannStatus cann_operator_set_attr_tensor_raw_format(CannOperatorHandle op,
     attr_value.SetTensor(tensor);
     ToGeOp(op)->SetAttr(std::string(name), std::move(attr_value));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_attr_bool(CannOperatorHandle op,
                                         const char* name,
                                         int32_t value) {
+    CANN_TRY
     if (!op || !name) return kInvalidPtr;
     ToGeOp(op)->SetAttr(std::string(name), static_cast<bool>(value));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ── Tensor Descriptor ───────────────────────────────────────────────── */
 
 CannOpTensorDescHandle cann_operator_get_input_desc(CannOperatorHandle op,
                                                    uint32_t index) {
+    CANN_TRY
     if (!op) return nullptr;
     ge::TensorDesc desc = ToGeOp(op)->GetInputDesc(index);
     auto* wrap = new CannOpTensorDescImpl{desc};
     return reinterpret_cast<CannOpTensorDescHandle>(wrap);
+    CANN_CATCH_HANDLE
 }
 
 CannOpTensorDescHandle cann_operator_get_output_desc(CannOperatorHandle op,
                                                     uint32_t index) {
+    CANN_TRY
     if (!op) return nullptr;
     ge::TensorDesc desc = ToGeOp(op)->GetOutputDesc(index);
     auto* wrap = new CannOpTensorDescImpl{desc};
     return reinterpret_cast<CannOpTensorDescHandle>(wrap);
+    CANN_CATCH_HANDLE
 }
 
 CannStatus cann_operator_update_input_desc(CannOperatorHandle op,
                                               const char* name,
                                               CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!op || !name || !desc) return kInvalidPtr;
     ToGeOp(op)->UpdateInputDesc(std::string(name), desc->desc);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ── Operator Info ────────────────────────────────────────────────────── */
 
 const char* cann_operator_get_name(CannOperatorHandle op) {
+    CANN_TRY
     if (!op) return nullptr;
     std::string name = ToGeOp(op)->GetName();
     char* buf = static_cast<char*>(std::malloc(name.size() + 1));
     if (!buf) return nullptr;
     std::memcpy(buf, name.c_str(), name.size() + 1);
     return buf; /* Caller must free with cann_string_free() */
+    CANN_CATCH_HANDLE
 }
 
 const char* cann_operator_get_type(CannOperatorHandle op) {
+    CANN_TRY
     if (!op) return nullptr;
     std::string type = ToGeOp(op)->GetType();
     char* buf = static_cast<char*>(std::malloc(type.size() + 1));
     if (!buf) return nullptr;
     std::memcpy(buf, type.c_str(), type.size() + 1);
     return buf; /* Caller must free with cann_string_free() */
+    CANN_CATCH_HANDLE
 }
 
 /* ── Dynamic Input / Output ──────────────────────────────────────────── */
@@ -336,23 +374,29 @@ const char* cann_operator_get_type(CannOperatorHandle op) {
 CannStatus cann_operator_create_dynamic_input(CannOperatorHandle op,
                                                const char* name,
                                                uint32_t num) {
+    CANN_TRY
     if (!op || !name) return kInvalidPtr;
     ToGeOp(op)->DynamicInputRegister(std::string(name), num);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_create_dynamic_output(CannOperatorHandle op,
                                                 const char* name,
                                                 uint32_t num) {
+    CANN_TRY
     if (!op || !name) return kInvalidPtr;
     ToGeOp(op)->DynamicOutputRegister(std::string(name), num);
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_dynamic_input_by_index(CannOperatorHandle op, const char* name, uint32_t index, CannOperatorHandle input_op) {
+    CANN_TRY
     if (!op || !name || !input_op) return kInvalidPtr;
     ToGeOp(op)->SetDynamicInput(std::string(name), index, *ToGeOp(input_op));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannStatus cann_operator_set_dynamic_input_by_index_by_output(CannOperatorHandle op,
@@ -360,9 +404,11 @@ CannStatus cann_operator_set_dynamic_input_by_index_by_output(CannOperatorHandle
                                                 uint32_t index,
                                                 CannOperatorHandle input_op,
                                                 uint32_t output_index) {
+    CANN_TRY
     if (!op || !name || !input_op) return kInvalidPtr;
     ToGeOp(op)->SetDynamicInput(std::string(name), index, ToGeOp(input_op)->GetOutput(output_index));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 
@@ -370,9 +416,11 @@ CannStatus cann_operator_set_input_by_output(CannOperatorHandle op,
                                               const char* name,
                                               CannOperatorHandle input_op,
                                               uint32_t output_index) {
+    CANN_TRY
     if (!op || !name || !input_op) return kInvalidPtr;
     ToGeOp(op)->SetInput(std::string(name), ToGeOp(input_op)->GetOutput(output_index));
     return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -385,706 +433,1006 @@ CannStatus cann_operator_set_input_by_output(CannOperatorHandle op,
 /* ── Data / Constants ──────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_data(void) {
+    CANN_TRY
     auto* op = new hiai::op::Data();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_data_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Data(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_const(void) {
+    CANN_TRY
     auto* op = new hiai::op::Const();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_const_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Const(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Element-wise Arithmetic ───────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_add(void) {
+    CANN_TRY
     auto* op = new hiai::op::Add();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_add_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Add(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sub(void) {
+    CANN_TRY
     auto* op = new hiai::op::Sub();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sub_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Sub(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_mul(void) {
+    CANN_TRY
     auto* op = new hiai::op::Mul();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_mul_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Mul(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_real_div(void) {
+    CANN_TRY
     auto* op = new hiai::op::RealDiv();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_real_div_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::RealDiv(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_maximum(void) {
+    CANN_TRY
     auto* op = new hiai::op::Maximum();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_maximum_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Maximum(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_minimum(void) {
+    CANN_TRY
     auto* op = new hiai::op::Minimum();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_minimum_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Minimum(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pow(void) {
+    CANN_TRY
     auto* op = new hiai::op::Pow();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pow_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Pow(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Comparisons ──────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_greater(void) {
+    CANN_TRY
     auto* op = new hiai::op::Greater();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_greater_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Greater(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_greater_equal(void) {
+    CANN_TRY
     auto* op = new hiai::op::GreaterEqual();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_greater_equal_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::GreaterEqual(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_less(void) {
+    CANN_TRY
     auto* op = new hiai::op::Less();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_less_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Less(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_less_equal(void) {
+    CANN_TRY
     auto* op = new hiai::op::LessEqual();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_less_equal_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::LessEqual(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_equal(void) {
+    CANN_TRY
     auto* op = new hiai::op::Equal();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_equal_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Equal(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_not_equal(void) {
+    CANN_TRY
     auto* op = new hiai::op::NotEqual();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_not_equal_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::NotEqual(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Logical ──────────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_logical_or(void) {
+    CANN_TRY
     auto* op = new hiai::op::LogicalOr();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_logical_or_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::LogicalOr(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_logical_xor(void) {
+    CANN_TRY
     auto* op = new hiai::op::LogicalXor();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_logical_xor_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::LogicalXor(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_logical_not(void) {
+    CANN_TRY
     auto* op = new hiai::op::LogicalNot();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_logical_not_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::LogicalNot(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_logical_and(void) {
+    CANN_TRY
     auto* op = new hiai::op::LogicalAnd();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_logical_and_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::LogicalAnd(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Activations ──────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_activation(void) {
+    CANN_TRY
     auto* op = new hiai::op::Activation();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_activation_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Activation(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_hard_swish(void) {
+    CANN_TRY
     auto* op = new hiai::op::HardSwish();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_hard_swish_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::HardSwish(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Unary Math ──────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_neg(void) {
+    CANN_TRY
     auto* op = new hiai::op::Neg();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_neg_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Neg(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_ceil(void) {
+    CANN_TRY
     auto* op = new hiai::op::Ceil();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_ceil_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Ceil(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_cos(void) {
+    CANN_TRY
     auto* op = new hiai::op::Cos();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_cos_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Cos(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_exp(void) {
+    CANN_TRY
     auto* op = new hiai::op::Exp();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_exp_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Exp(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_floor(void) {
+    CANN_TRY
     auto* op = new hiai::op::Floor();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_floor_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Floor(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_log(void) {
+    CANN_TRY
     auto* op = new hiai::op::Log();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_log_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Log(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sign(void) {
+    CANN_TRY
     auto* op = new hiai::op::Sign();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sign_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Sign(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_round(void) {
+    CANN_TRY
     auto* op = new hiai::op::Round();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_round_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Round(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sin(void) {
+    CANN_TRY
     auto* op = new hiai::op::Sin();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sin_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Sin(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_tan(void) {
+    CANN_TRY
     auto* op = new hiai::op::Tan();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_tan_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Tan(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sqrt(void) {
+    CANN_TRY
     auto* op = new hiai::op::Sqrt();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_sqrt_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Sqrt(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_erf(void) {
+    CANN_TRY
     auto* op = new hiai::op::Erf();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_erf_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Erf(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reciprocal(void) {
+    CANN_TRY
     auto* op = new hiai::op::Reciprocal();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reciprocal_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Reciprocal(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_square(void) {
+    CANN_TRY
     auto* op = new hiai::op::Square();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_square_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Square(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Neural Network ──────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_conv2d(void) {
+    CANN_TRY
     auto* op = new ge::op::Conv2D();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_conv2d_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new ge::op::Conv2D(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_matmul(void) {
+    CANN_TRY
     auto* op = new hiai::op::MatMul();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_matmul_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::MatMul(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pool2d(void) {
+    CANN_TRY
     auto* op = new ge::op::Pooling();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pool2d_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new ge::op::Pooling(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_softmax(void) {
+    CANN_TRY
     auto* op = new hiai::op::Softmax();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_softmax_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Softmax(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_batch_norm(void) {
+    CANN_TRY
     auto* op = new ge::op::BNInference();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_batch_norm_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new ge::op::BNInference(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_bn_inference(void) {
+    CANN_TRY
     auto* op = new hiai::op::BNInference();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_bn_inference_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::BNInference(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_convolution(void) {
+    CANN_TRY
     auto* op = new hiai::op::Convolution();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_convolution_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Convolution(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pool2d_d(void) {
+    CANN_TRY
     auto* op = new hiai::op::PoolingD();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pool2d_d_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::PoolingD(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_gemm_d(void) {
+    CANN_TRY
     auto* op = new hiai::op::GemmD();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_gemm_d_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::GemmD(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Shape / Transform ───────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_reshape(void) {
+    CANN_TRY
     auto* op = new hiai::op::Reshape();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reshape_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Reshape(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_transpose(void) {
+    CANN_TRY
     auto* op = new ge::op::Transpose();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_transpose_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new ge::op::Transpose(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_concat(void) {
+    CANN_TRY
     auto* op = new hiai::op::ConcatD();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_concat_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ConcatD(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_split(void) {
+    CANN_TRY
     auto* op = new hiai::op::SplitD();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_split_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::SplitD(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_slice(void) {
+    CANN_TRY
     auto* op = new hiai::op::Slice();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_slice_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Slice(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_squeeze(void) {
+    CANN_TRY
     auto* op = new hiai::op::Squeeze();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_squeeze_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Squeeze(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_expand_dims(void) {
+    CANN_TRY
     auto* op = new hiai::op::ExpandDims();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_expand_dims_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ExpandDims(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Array ───────────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_broadcast_to(void) {
+    CANN_TRY
     auto* op = new hiai::op::BroadcastTo();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_broadcast_to_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::BroadcastTo(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_shape(void) {
+    CANN_TRY
     auto* op = new hiai::op::Shape();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_shape_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Shape(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_gather_nd(void) {
+    CANN_TRY
     auto* op = new hiai::op::GatherNd();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_gather_nd_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::GatherNd(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_gather_v2d(void) {
+    CANN_TRY
     auto* op = new hiai::op::GatherV2D();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_gather_v2d_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::GatherV2D(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pad(void) {
+    CANN_TRY
     auto* op = new hiai::op::Pad();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_pad_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Pad(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_tile(void) {
+    CANN_TRY
     auto* op = new hiai::op::Tile();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_tile_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Tile(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_select(void) {
+    CANN_TRY
     auto* op = new hiai::op::Select();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_select_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::Select(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_strided_slice_v2(void) {
+    CANN_TRY
     auto* op = new hiai::op::StridedSliceV2();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_strided_slice_v2_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::StridedSliceV2(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_scatter_nd_update(void) {
+    CANN_TRY
     auto* op = new hiai::op::ScatterNdUpdate();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_scatter_nd_update_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ScatterNdUpdate(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_clip_by_value(void) {
+    CANN_TRY
     auto* op = new hiai::op::ClipByValue();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_clip_by_value_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ClipByValue(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_arg_max_ext2(void) {
+    CANN_TRY
     auto* op = new hiai::op::ArgMaxExt2();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_arg_max_ext2_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ArgMaxExt2(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_cast_t(void) {
+    CANN_TRY
     auto* op = new hiai::op::CastT();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_cast_t_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::CastT(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Image ───────────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_resize_nearest_neighbor(void) {
+    CANN_TRY
     auto* op = new hiai::op::ResizeNearestNeighbor();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_resize_nearest_neighbor_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ResizeNearestNeighbor(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_resize_bilinear(void) {
+    CANN_TRY
     auto* op = new hiai::op::ResizeBilinear();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_resize_bilinear_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ResizeBilinear(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Quantization ────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_quantize_v2(void) {
+    CANN_TRY
     auto* op = new hiai::op::QuantizeV2();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_quantize_v2_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::QuantizeV2(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── Reductions ──────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_reduce_sum(void) {
+    CANN_TRY
     auto* op = new hiai::op::ReduceSum();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_sum_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ReduceSum(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_mean(void) {
+    CANN_TRY
     auto* op = new hiai::op::ReduceMean();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_mean_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ReduceMean(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_max(void) {
+    CANN_TRY
     auto* op = new hiai::op::ReduceMax();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_max_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ReduceMax(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_min(void) {
+    CANN_TRY
     auto* op = new hiai::op::ReduceMin();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_min_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ReduceMin(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_prod_d(void) {
+    CANN_TRY
     auto* op = new hiai::op::ReduceProdD();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_prod_d_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ReduceProdD(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_l2d(void) {
+    CANN_TRY
     auto* op = new hiai::op::ReduceL2D();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_l2d_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ReduceL2D(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_log_sum_exp(void) {
+    CANN_TRY
     auto* op = new hiai::op::ReduceLogSumExp();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_reduce_log_sum_exp_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::ReduceLogSumExp(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── ge::op ──────────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_cumsum(void) {
+    CANN_TRY
     auto* op = new ge::op::Cumsum();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_cumsum_with_name(const char* name) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new ge::op::Cumsum(std::string(name));
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 /* ── NetOutput ────────────────────────────────────────────────────────── */
 
 CannOperatorHandle cann_op_net_output(void) {
+    CANN_TRY
     auto* op = new hiai::op::NetOutput();
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 CannOperatorHandle cann_op_net_output_with_name(const char* name, int32_t input_count) {
+    CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::NetOutput(std::string(name));
     (void)input_count;
     return FromGeOp(op);
+    CANN_CATCH_HANDLE
 }
 
 }  // extern "C"
