@@ -85,24 +85,33 @@ CannStatus cann_tensor_desc_set_data_type(CannOpTensorDescHandle desc, CannDataT
 
 /* ── TensorDesc property getters ───────────────────────────────────────── */
 
-const int64_t* cann_tensor_desc_get_shape(CannOpTensorDescHandle desc,
-                                           int32_t* out_shape_count) {
+CannStatus cann_tensor_desc_get_shape(CannOpTensorDescHandle desc,
+                                      int64_t* out_dims,
+                                      int32_t max_dims,
+                                      int32_t* out_dim_count) {
     CANN_TRY
-    if (!desc || !out_shape_count) return nullptr;
-    const std::vector<int64_t>& dims = desc->desc.GetShape().GetDims();
-    *out_shape_count = static_cast<int32_t>(dims.size());
-    return dims.data();
-    CANN_CATCH_HANDLE
+    if (!desc || !out_dims || max_dims <= 0 || !out_dim_count) return kInvalidPara;
+    std::vector<int64_t> dims = desc->desc.GetShape().GetDims();
+    int32_t count = static_cast<int32_t>(dims.size());
+    *out_dim_count = count;
+    int32_t copy = count < max_dims ? count : max_dims;
+    std::memcpy(out_dims, dims.data(), static_cast<size_t>(copy) * sizeof(int64_t));
+    return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 CannFormat cann_tensor_desc_get_format(CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!desc) return CANN_FORMAT_RESERVED;
     return FromGeFormat(desc->desc.GetFormat());
+    CANN_CATCH_FORMAT
 }
 
 CannDataType cann_tensor_desc_get_data_type(CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!desc) return CANN_DT_UNDEFINED;
     return FromGeDataType(desc->desc.GetDataType());
+    CANN_CATCH_DATATYPE
 }
 
 /* ── TensorDesc advanced accessors ───────────────────────────────────────── */
@@ -140,8 +149,10 @@ CannStatus cann_tensor_desc_set_origin_shape(CannOpTensorDescHandle desc,
 }
 
 CannFormat cann_tensor_desc_get_origin_format(CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!desc) return CANN_FORMAT_RESERVED;
     return FromGeFormat(desc->desc.GetOriginFormat());
+    CANN_CATCH_FORMAT
 }
 
 CannStatus cann_tensor_desc_set_origin_format(CannOpTensorDescHandle desc,
@@ -154,8 +165,10 @@ CannStatus cann_tensor_desc_set_origin_format(CannOpTensorDescHandle desc,
 }
 
 CannDataType cann_tensor_desc_get_origin_data_type(CannOpTensorDescHandle desc) {
+    CANN_TRY
     if (!desc) return CANN_DT_UNDEFINED;
     return FromGeDataType(desc->desc.GetOriginDatatype());
+    CANN_CATCH_DATATYPE
 }
 
 CannStatus cann_tensor_desc_set_origin_data_type(CannOpTensorDescHandle desc,
@@ -188,13 +201,17 @@ void cann_shape_destroy(CannShapeHandle shape) {
 }
 
 int32_t cann_shape_get_dim_num(CannShapeHandle shape) {
+    CANN_TRY
     if (!shape) return 0;
     return static_cast<int32_t>(shape->shape.GetDimNum());
+    CANN_CATCH_ZERO
 }
 
 int64_t cann_shape_get_dim(CannShapeHandle shape, int32_t idx) {
+    CANN_TRY
     if (!shape || idx < 0) return 0;
     return shape->shape.GetDim(static_cast<size_t>(idx));
+    CANN_CATCH_ZERO
 }
 
 CannStatus cann_shape_set_dim(CannShapeHandle shape, int32_t idx, int64_t value) {
@@ -205,23 +222,33 @@ CannStatus cann_shape_set_dim(CannShapeHandle shape, int32_t idx, int64_t value)
     CANN_CATCH_STATUS
 }
 
-const int64_t* cann_shape_get_dims(CannShapeHandle shape, int32_t* out_count) {
+CannStatus cann_shape_get_dims(CannShapeHandle shape,
+                               int64_t* out_dims,
+                               int32_t max_dims,
+                               int32_t* out_dim_count) {
     CANN_TRY
-    if (!shape || !out_count) return nullptr;
-    const std::vector<int64_t>& dims = shape->shape.GetDims();
-    *out_count = static_cast<int32_t>(dims.size());
-    return dims.data();
-    CANN_CATCH_HANDLE
+    if (!shape || !out_dims || max_dims <= 0 || !out_dim_count) return kInvalidPara;
+    std::vector<int64_t> dims = shape->shape.GetDims();
+    int32_t count = static_cast<int32_t>(dims.size());
+    *out_dim_count = count;
+    int32_t copy = count < max_dims ? count : max_dims;
+    std::memcpy(out_dims, dims.data(), static_cast<size_t>(copy) * sizeof(int64_t));
+    return kSuccess;
+    CANN_CATCH_STATUS
 }
 
 int64_t cann_shape_get_total_dim_num(CannShapeHandle shape) {
+    CANN_TRY
     if (!shape) return 0;
     return shape->shape.GetTotalDimNum();
+    CANN_CATCH_ZERO
 }
 
 uint32_t cann_shape_get_shape_size(CannShapeHandle shape) {
+    CANN_TRY
     if (!shape) return 0;
     return shape->shape.GetShapeSize();
+    CANN_CATCH_ZERO
 }
 
 /* ── Tensor lifecycle ──────────────────────────────────────────────────── */

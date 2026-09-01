@@ -39,8 +39,10 @@ CANN_ADAPTER_EXPORT CannStatus cann_tensor_desc_set_format(CannOpTensorDescHandl
 
 CANN_ADAPTER_EXPORT CannStatus cann_tensor_desc_set_data_type(CannOpTensorDescHandle desc, CannDataType dtype);
 
-CANN_ADAPTER_EXPORT const int64_t* cann_tensor_desc_get_shape(CannOpTensorDescHandle desc,
-                                           int32_t* out_shape_count);
+CANN_ADAPTER_EXPORT CannStatus cann_tensor_desc_get_shape(CannOpTensorDescHandle desc,
+                                       int64_t* out_dims,
+                                       int32_t max_dims,
+                                       int32_t* out_dim_count);
 
 CANN_ADAPTER_EXPORT CannFormat    cann_tensor_desc_get_format(CannOpTensorDescHandle desc);
 CANN_ADAPTER_EXPORT CannDataType  cann_tensor_desc_get_data_type(CannOpTensorDescHandle desc);
@@ -72,7 +74,10 @@ CANN_ADAPTER_EXPORT void cann_shape_destroy(CannShapeHandle shape);
 CANN_ADAPTER_EXPORT int32_t  cann_shape_get_dim_num(CannShapeHandle shape);
 CANN_ADAPTER_EXPORT int64_t  cann_shape_get_dim(CannShapeHandle shape, int32_t idx);
 CANN_ADAPTER_EXPORT CannStatus cann_shape_set_dim(CannShapeHandle shape, int32_t idx, int64_t value);
-CANN_ADAPTER_EXPORT const int64_t* cann_shape_get_dims(CannShapeHandle shape, int32_t* out_count);
+CANN_ADAPTER_EXPORT CannStatus cann_shape_get_dims(CannShapeHandle shape,
+                                 int64_t* out_dims,
+                                 int32_t max_dims,
+                                 int32_t* out_dim_count);
 CANN_ADAPTER_EXPORT int64_t  cann_shape_get_total_dim_num(CannShapeHandle shape);
 CANN_ADAPTER_EXPORT uint32_t cann_shape_get_shape_size(CannShapeHandle shape);
 

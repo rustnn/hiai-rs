@@ -93,8 +93,10 @@ void* cann_io_tensor_get_buffer(CannIOTensorHandle tensor) {
 }
 
 uint32_t cann_io_tensor_get_size(CannIOTensorHandle tensor) {
+    CANN_TRY
     if (!tensor) return 0;
     return reinterpret_cast<CannIOTensorImpl*>(tensor)->tensor->GetSize();
+    CANN_CATCH_ZERO
 }
 
 
@@ -179,7 +181,9 @@ void cann_io_tensor_dim_set_number(CannIOTensorDimensionHandle dim, uint32_t n) 
 }
 
 uint32_t cann_io_tensor_dim_get_number(CannIOTensorDimensionHandle dim) {
+    CANN_TRY
     return dim ? dim->dim.GetNumber() : 0;
+    CANN_CATCH_ZERO
 }
 
 void cann_io_tensor_dim_set_channel(CannIOTensorDimensionHandle dim, uint32_t c) {
@@ -189,7 +193,9 @@ void cann_io_tensor_dim_set_channel(CannIOTensorDimensionHandle dim, uint32_t c)
 }
 
 uint32_t cann_io_tensor_dim_get_channel(CannIOTensorDimensionHandle dim) {
+    CANN_TRY
     return dim ? dim->dim.GetChannel() : 0;
+    CANN_CATCH_ZERO
 }
 
 void cann_io_tensor_dim_set_height(CannIOTensorDimensionHandle dim, uint32_t h) {
@@ -199,7 +205,9 @@ void cann_io_tensor_dim_set_height(CannIOTensorDimensionHandle dim, uint32_t h) 
 }
 
 uint32_t cann_io_tensor_dim_get_height(CannIOTensorDimensionHandle dim) {
+    CANN_TRY
     return dim ? dim->dim.GetHeight() : 0;
+    CANN_CATCH_ZERO
 }
 
 void cann_io_tensor_dim_set_width(CannIOTensorDimensionHandle dim, uint32_t w) {
@@ -209,7 +217,9 @@ void cann_io_tensor_dim_set_width(CannIOTensorDimensionHandle dim, uint32_t w) {
 }
 
 uint32_t cann_io_tensor_dim_get_width(CannIOTensorDimensionHandle dim) {
+    CANN_TRY
     return dim ? dim->dim.GetWidth() : 0;
+    CANN_CATCH_ZERO
 }
 
 }  // extern "C"

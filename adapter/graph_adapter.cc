@@ -88,8 +88,10 @@ CannOperatorHandle cann_graph_find_op_by_name(CannGraphHandle graph, const char*
 }
 
 int32_t cann_graph_is_valid(CannGraphHandle graph) {
+    CANN_TRY
     if (!graph) return 0;
     return graph->graph.IsValid() ? 1 : 0;
+    CANN_CATCH_ZERO
 }
 
 }  // extern "C"
