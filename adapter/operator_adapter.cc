@@ -80,10 +80,13 @@ CannOperatorHandle cann_operator_create_registered(const char* op_type_name, con
     if (type == "Sign")  return FromGeOp(new hiai::op::Sign(name));
     if (type == "Erf")   return FromGeOp(new hiai::op::Erf(name));
     if (type == "Reciprocal") return FromGeOp(new hiai::op::Reciprocal(name));
+    if (type == "Square") return FromGeOp(new hiai::op::Square(name));
+    if (type == "Round")  return FromGeOp(new hiai::op::Round(name));
 
     // ── Activations ──────────────────────────────────────────────
-    // Activation modes: 0=Sigmoid, 1=ReLU, 2=Tanh, 3=GELU, 5=LeakyReLU,
-    // 6=ELU, 8=Softplus, 9=Softsign, 10=HardSigmoid
+    // Activation modes (set by the converter via the "mode" attr):
+    //   0=Sigmoid, 1=ReLU, 2=Tanh, 5=LeakyReLU, 6=Abs, 15=GELU.
+    // (ELU/Softplus/Softsign/HardSigmoid use their own Activation modes.)
     if (type == "ReLU" || type == "Sigmoid" || type == "Tanh" ||
         type == "ELU" || type == "GELU" || type == "LeakyRelu" ||
         type == "HardSigmoid" || type == "Softplus" || type == "Softsign")
@@ -115,6 +118,7 @@ CannOperatorHandle cann_operator_create_registered(const char* op_type_name, con
     if (type == "Transpose")  return FromGeOp(new ge::op::Transpose(name));
     if (type == "Tile")       return FromGeOp(new hiai::op::Tile(name));
     if (type == "Slice")      return FromGeOp(new hiai::op::Slice(name));
+    if (type == "StridedSliceV2") return FromGeOp(new hiai::op::StridedSliceV2(name));
     if (type == "Split")      return FromGeOp(new hiai::op::SplitD(name));
     if (type == "Concat")     return FromGeOp(new hiai::op::ConcatD(name));
     if (type == "Pad")        return FromGeOp(new hiai::op::Pad(name));
@@ -129,7 +133,6 @@ CannOperatorHandle cann_operator_create_registered(const char* op_type_name, con
     if (type == "ScatterND")  return FromGeOp(new hiai::op::ScatterNdUpdate(name));
     if (type == "Where")      return FromGeOp(new hiai::op::Select(name));
     if (type == "Cast")       return FromGeOp(new hiai::op::CastT(name));
-    if (type == "Identity")   return FromGeOp(new hiai::op::Squeeze(name));
     if (type == "Clamp")      return FromGeOp(new hiai::op::ClipByValue(name));
 
     // ── Other ────────────────────────────────────────────────────
