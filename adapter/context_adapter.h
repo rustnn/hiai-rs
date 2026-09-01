@@ -45,6 +45,15 @@ CANN_ADAPTER_EXPORT CannStatus cann_context_get_all_keys(CannContextHandle conte
                                        int32_t max_keys,
                                        int32_t* out_key_count);
 
+/* ── Shared string ownership ──────────────────────────────────────────── */
+
+/* Frees a NUL-terminated string returned by any cann_* function that
+ * allocates a copy for the caller (cann_context_get_para,
+ * cann_context_get_all_keys, cann_model_desc_get_name,
+ * cann_model_manager_get_version, cann_operator_get_name/type).
+ * Passing nullptr is a no-op. */
+CANN_ADAPTER_EXPORT void cann_string_free(const char* str);
+
 }  // extern "C"
 }  // namespace ddk
 

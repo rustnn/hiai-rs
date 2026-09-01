@@ -317,7 +317,7 @@ const char* cann_operator_get_name(CannOperatorHandle op) {
     char* buf = static_cast<char*>(std::malloc(name.size() + 1));
     if (!buf) return nullptr;
     std::memcpy(buf, name.c_str(), name.size() + 1);
-    return buf;
+    return buf; /* Caller must free with cann_string_free() */
 }
 
 const char* cann_operator_get_type(CannOperatorHandle op) {
@@ -326,7 +326,7 @@ const char* cann_operator_get_type(CannOperatorHandle op) {
     char* buf = static_cast<char*>(std::malloc(type.size() + 1));
     if (!buf) return nullptr;
     std::memcpy(buf, type.c_str(), type.size() + 1);
-    return buf;
+    return buf; /* Caller must free with cann_string_free() */
 }
 
 /* ── Dynamic Input / Output ──────────────────────────────────────────── */

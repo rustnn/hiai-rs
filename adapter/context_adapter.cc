@@ -48,7 +48,7 @@ const char* cann_context_get_para(CannContextHandle context,
     char* buf = static_cast<char*>(std::malloc(val.size() + 1));
     if (!buf) return nullptr;
     std::memcpy(buf, val.c_str(), val.size() + 1);
-    return buf; /* Caller must free() */
+    return buf; /* Caller must free with cann_string_free() */
 }
 
 CannStatus cann_context_add_para(CannContextHandle context,
@@ -86,10 +86,16 @@ CannStatus cann_context_get_all_keys(CannContextHandle context,
         char* buf = static_cast<char*>(std::malloc(keyVec[i].size() + 1));
         if (buf) {
             std::memcpy(buf, keyVec[i].c_str(), keyVec[i].size() + 1);
-            keys[i] = buf;
+            keys[i] = buf; /* Caller must free each with cann_string_free() */
         }
     }
     return kSuccess;
+}
+
+/* ── Shared string ownership ──────────────────────────────────────────── */
+
+void cann_string_free(const char* str) {
+    std::free(const_cast<char*>(str));
 }
 
 }  // extern "C"

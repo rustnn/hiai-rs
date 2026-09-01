@@ -10,6 +10,7 @@
 #include "model_manager_adapter.h"
 #include "adapter_internal.h"
 
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -38,7 +39,11 @@ void cann_model_desc_destroy(CannModelDescHandle desc) {
 
 const char* cann_model_desc_get_name(CannModelDescHandle desc) {
     if (!desc) return nullptr;
-    return desc->desc->GetName().c_str();
+    std::string name = desc->desc->GetName();
+    char* buf = static_cast<char*>(std::malloc(name.size() + 1));
+    if (!buf) return nullptr;
+    std::memcpy(buf, name.c_str(), name.size() + 1);
+    return buf; /* Caller must free with cann_string_free() */
 }
 
 CannStatus cann_model_desc_set_model_buffer(CannModelDescHandle desc,
@@ -213,9 +218,14 @@ CannStatus cann_model_manager_unload(CannModelManagerHandle manager) {
 
 const char* cann_model_manager_get_version(CannModelManagerHandle manager) {
     if (!manager) return nullptr;
-    char* version =
+    const char* version =
         reinterpret_cast<CannModelMgrImpl*>(manager)->client.GetVersion();
-    return version;
+    if (!version) return nullptr;
+    size_t len = std::strlen(version);
+    char* buf = static_cast<char*>(std::malloc(len + 1));
+    if (!buf) return nullptr;
+    std::memcpy(buf, version, len + 1);
+    return buf; /* Caller must free with cann_string_free() */
 }
 
 CannStatus cann_model_manager_check_compatibility(
