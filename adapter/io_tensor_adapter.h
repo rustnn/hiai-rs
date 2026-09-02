@@ -24,9 +24,6 @@ extern "C" {
 
 CANN_ADAPTER_EXPORT CannIOTensorHandle cann_io_tensor_create();
 
-CANN_ADAPTER_EXPORT CannIOTensorHandle cann_io_tensor_create_with_data(const void* data,
-                                               uint32_t size);
-
 CANN_ADAPTER_EXPORT void     cann_io_tensor_destroy(CannIOTensorHandle tensor);
 
 /* ── Tensor data access ──────────────────────────────────────────────── */
