@@ -46,6 +46,9 @@ CANN_ADAPTER_EXPORT CannStatus    cann_model_desc_get_dynamic_shape_config(CannM
                                                          int32_t* out_enable,
                                                          uint32_t* out_max_cached_num);
 
+/* Fills up to `max_dims` entries of `dims`; `*out_dim_count` is the total
+ * number of dims. Each written entry is a new handle the caller must destroy
+ * with cann_io_tensor_dim_destroy(). */
 CANN_ADAPTER_EXPORT CannStatus    cann_model_desc_get_input_dims(CannModelDescHandle desc,
                                                CannIOTensorDimensionHandle* dims,
                                                int32_t max_dims,
@@ -93,6 +96,9 @@ CANN_ADAPTER_EXPORT CannStatus cann_model_manager_check_compatibility(
     CannModelDescHandle desc,
     int32_t* out_compatible);
 
+/* Fills up to `max_*_dims` entries of `input_dims` / `output_dims`; the
+ * `*out_*_dim_count` out-params receive the totals. Each written entry is a
+ * new handle the caller must destroy with cann_io_tensor_dim_destroy(). */
 CANN_ADAPTER_EXPORT CannStatus cann_model_manager_get_model_io_tensor_dim(
     CannModelManagerHandle manager,
     const char* model_name,

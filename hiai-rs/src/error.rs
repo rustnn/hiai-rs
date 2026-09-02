@@ -69,6 +69,10 @@ pub enum Error {
     #[error("{what} exceeds u32::MAX (4 GiB)")]
     TooLarge { what: &'static str },
 
+    /// A count exceeds the DDK's 32-bit signed limit (a Rust-side guard).
+    #[error("{what} exceeds i32::MAX")]
+    TooMany { what: &'static str },
+
     /// The output tensor buffer returned by the DDK is null.
     #[error("output tensor buffer is null")]
     OutputBufferNull,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-fn build_runtime_bindings() {
+fn build_bindings() {
     use std::{env, path::Path};
 
     // The pure-C adapter headers live in the workspace root's `adapter/`.
@@ -102,5 +102,5 @@ fn build_runtime_bindings() {
 }
 
 fn main() {
-    build_runtime_bindings();
+    build_bindings();
 }

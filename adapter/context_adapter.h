@@ -28,6 +28,9 @@ CANN_ADAPTER_EXPORT CannStatus cann_context_set_para(CannContextHandle context,
                                    const char* key,
                                    const char* value);
 
+/* Returns an owned copy of the parameter value (free with cann_string_free),
+ * or nullptr on error. An empty string is returned for both an unset key and
+ * an empty value; use cann_context_get_all_keys to test key presence. */
 CANN_ADAPTER_EXPORT const char* cann_context_get_para(CannContextHandle context,
                                     const char* key);
 

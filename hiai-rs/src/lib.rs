@@ -47,7 +47,7 @@
 mod dispatch;
 mod error;
 
-pub use dispatch::{TensorDesc, dispatch};
+pub use dispatch::{Session, TensorDesc, dispatch};
 pub use error::{CannStatus, Error, Result};
 
 // Re-export the raw bindings for advanced use (e.g. graph building).

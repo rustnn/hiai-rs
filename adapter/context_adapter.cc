@@ -49,7 +49,6 @@ const char* cann_context_get_para(CannContextHandle context,
     if (!context || !key) return nullptr;
     std::string val =
         reinterpret_cast<CannContextImpl*>(context)->context.GetPara(std::string(key));
-    if (val.empty()) return nullptr;
     char* buf = static_cast<char*>(std::malloc(val.size() + 1));
     if (!buf) return nullptr;
     std::memcpy(buf, val.c_str(), val.size() + 1);

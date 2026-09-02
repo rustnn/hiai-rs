@@ -157,6 +157,10 @@ void cann_operator_destroy(CannOperatorHandle op) {
 CannOperatorHandle cann_operator_clone(CannOperatorHandle op) {
     CANN_TRY
     if (!op) return nullptr;
+    // Copies through the base ge::Operator (a slice of any typed subclass).
+    // This is intentional: the op's `type` string is preserved, so graph build
+    // still resolves the op via the global registry; the typed subclass only
+    // adds construction-time registration, which is not needed on a clone.
     auto* new_op = new ge::Operator(*ToGeOp(op));
     return FromGeOp(new_op);
     CANN_CATCH_HANDLE
@@ -247,7 +251,9 @@ CannStatus cann_operator_set_attr_tensor(CannOperatorHandle op,
     CANN_TRY
     if (!op || !name || !tensor) return kInvalidPtr;
     ge::AttrValue attr_value = ge::AttrValue();
-    // WARN: Memory model of tensor is unknown. // Here perhaps the tensor is recreated.
+    // The source ge::Tensor is copy-constructed into a shared_ptr owned by the
+    // AttrValue; ge::Tensor shares its underlying buffer via refcounting, so the
+    // source CannOpTensorImpl may be destroyed after this call without dangling.
     attr_value.SetTensor(std::make_shared<ge::Tensor>(static_cast<CannOpTensorImpl*>(tensor)->tensor));
     ToGeOp(op)->SetAttr(std::string(name), std::move(attr_value));
     return kSuccess;
@@ -1430,6 +1436,8 @@ CannOperatorHandle cann_op_net_output_with_name(const char* name, int32_t input_
     CANN_TRY
     if (!name) return nullptr;
     auto* op = new hiai::op::NetOutput(std::string(name));
+    // `input_count` is unused: NetOutput's inputs are wired dynamically via
+    // cann_operator_create_dynamic_input / cann_operator_set_dynamic_input_*.
     (void)input_count;
     return FromGeOp(op);
     CANN_CATCH_HANDLE

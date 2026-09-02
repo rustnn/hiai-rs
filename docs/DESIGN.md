@@ -8,7 +8,7 @@ The DDK's native API is C++ (`hiai::op::*` operators, the GE graph engine, and t
 
 ## Why bindgen
 
-We use `bindgen` to generate headers for **flat pure-C API** exposed by The HiAI adapter.
+We use `bindgen` to generate Rust bindings for the **flat pure-C API** exposed by the HiAI adapter.
 
 ```
 adapter/*.h  ──bindgen──►  OUT_DIR/cann_bindings.rs  ──include!──►  hiai_rs_sys::sys
@@ -31,7 +31,7 @@ The adapter `.cc` files include DDK headers (`compatible/*.h`, `graph/*.h`, `hia
 
 ## Data types
 
-The adapter mirrors `ge::DataType` and `ge::Format` as `CannDataType` / `CannFormat` enums. `hiai-rs`'s `TensorDesc.dtype` carries the raw `CANN_DT_*` value (`i32`) and is reinterpreted as the bindgen enum (`#[repr(u32)]`) at the FFI boundary in `dispatch()`.
+The adapter mirrors `ge::DataType` and `ge::Format` as `CannDataType` / `CannFormat` enums. `hiai-rs`'s `TensorDesc.dtype` carries the raw `CANN_DT_*` value (`i32`) and is mapped to the bindgen enum via an explicit `match` in `dispatch()`; unknown or sentinel codes are rejected with `Error::InvalidDataType`.
 
 ## Model lifecycle
 
