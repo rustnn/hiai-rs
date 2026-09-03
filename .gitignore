@@ -1,0 +1,28 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.om
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Generated files
+hiai-rs-sys/cann_bindings.rs
+
+# Temporary files
+/tmp/
+*.tmp

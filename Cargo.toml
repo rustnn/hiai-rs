@@ -1,0 +1,23 @@
+[workspace]
+members = ["hiai-rs-sys", "hiai-rs"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+authors = ["Shubham Gupta <shubhamg13.work@gmail.com>"]
+repository = "https://github.com/rustnn/hiai-rs"
+
+[workspace.dependencies]
+hiai-rs-sys = { path = "hiai-rs-sys" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+# Allow testing rustnn against a local checkout without publishing.
+[patch.crates-io]
+hiai-rs = { path = "hiai-rs" }
+hiai-rs-sys = { path = "hiai-rs-sys" }
