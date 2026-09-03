@@ -166,7 +166,7 @@ impl Session {
                 name.as_ptr(),
                 3, // AiModelDescription_Frequency_HIGH
                 0, // HIAI_FRAMEWORK_NONE
-                0, // HIAI_MODELTYPE_OFFLINE
+                1, // HIAI_MODELTYPE_OFFLINE
                 0, // AiModelDescription_DeviceType_NPU
             )
         })
