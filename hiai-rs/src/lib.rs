@@ -21,22 +21,26 @@
 //! # Example
 //!
 //! ```rust,no_run
-//! use hiai_rs::{TensorDesc, dispatch};
+//! use hiai_rs::{InputDesc, OutputDesc, dispatch};
 //!
 //! # fn main() -> Result<(), hiai_rs::Error> {
 //! // Prebuilt offline model bytes (produced by the rustnn CANN converter).
 //! let model_bytes: &[u8] = todo!();
 //!
-//! let inputs = vec![TensorDesc {
-//!     data: [1.0f32; 4].into_iter().flat_map(f32::to_le_bytes).collect(),
+//! let input_data = [1.0f32; 4];
+//! let input_bytes: Vec<u8> = input_data.iter().flat_map(|f| f.to_le_bytes()).collect();
+//! let inputs = vec![InputDesc {
+//!     data: &input_bytes,
 //!     shape: vec![1, 4],
 //!     dtype: 0, // CANN_DT_FLOAT
 //! }];
 //!
-//! let mut outputs = vec![TensorDesc {
-//!     data: vec![0u8; 16],
+//! let mut output_data = vec![0u8; 16];
+//! let mut outputs = vec![OutputDesc {
+//!     data: &mut output_data,
 //!     shape: vec![1, 4],
 //!     dtype: 0,
+//!     actual_len: 0,
 //! }];
 //!
 //! dispatch(model_bytes, &inputs, &mut outputs)?;
@@ -47,7 +51,7 @@
 mod dispatch;
 mod error;
 
-pub use dispatch::{Session, TensorDesc, dispatch};
+pub use dispatch::{InputDesc, OutputDesc, Session, dispatch};
 pub use error::{CannStatus, Error, Result};
 
 // Re-export the raw bindings for advanced use (e.g. graph building).

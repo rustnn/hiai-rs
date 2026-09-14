@@ -12,4 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial workspace split into `hiai-rs-sys` (raw bindgen FFI) and `hiai-rs` (safe wrapper).
 - Vendored pure-C CANN adapter (`adapter/`) over the HiAI DDK.
 - `dispatch()` for running prebuilt offline models on Ascend NPUs.
-- `TensorDesc` tensor descriptor and `Error` type.
+- Borrowed `InputDesc`/`OutputDesc` tensor descriptors, with
+  `OutputDesc.actual_len` reporting the produced byte count.
+- `Session::prepare_io` and `IoCache` to pre-create and reuse DDK IO tensors
+  across dispatches, reconciling only changed slots.
+- `log`-based debug tracing for CANN timing, gated behind the `CANN_TIMING`
+  environment variable.
