@@ -81,7 +81,8 @@ pub enum Error {
     #[error("output buffer is too small")]
     OutputBufferTooSmall,
 
-    /// The `TensorDesc.dtype` value is not a known CANN data-type code.
+    /// The `InputDesc`/`OutputDesc` `dtype` value is not a known CANN
+    /// data-type code.
     #[error("invalid CANN data type: {value}")]
     InvalidDataType { value: i32 },
 }

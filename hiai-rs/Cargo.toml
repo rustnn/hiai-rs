@@ -12,4 +12,5 @@ categories = ["api-bindings", "hardware-support"]
 
 [dependencies]
 hiai-rs-sys = { path = "../hiai-rs-sys" }
+log = "0.4"
 thiserror = "2.0"
