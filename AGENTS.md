@@ -11,7 +11,7 @@ hiai-rs provides Rust bindings to Huawei's HiAI (CANN) DDK for inference on Asce
 
 ## Architecture
 
-The HiAI DDK exposes a C++ API (`hiai::op::*`, the GE graph engine, the model manager). Rust cannot call those classes directly, so this crate ships a **pure-C adapter** (`adapter/`) that wraps the DDK into `extern "C"` `cann_*` functions over opaque `Cann*` handles.
+The HiAI DDK exposes a C++ API (`hiai::op::*`, the GE graph engine, the model manager). Rust cannot call those classes directly, so this crate ships a **pure-C adapter** (`hiai-rs-sys/adapter/`) that wraps the DDK into `extern "C"` `cann_*` functions over opaque `Cann*` handles.
 
 ```
 hiai-rs (dispatch, TensorDesc, error)
@@ -54,4 +54,4 @@ make check-all               # fmt-check + clippy + test
 
 ## Attribution
 
-The adapter under `adapter/` is a local pure-C shim over the HiAI DDK. Licensed under Apache-2.0.
+The adapter under `hiai-rs-sys/adapter/` is a local pure-C shim over the HiAI DDK. Licensed under Apache-2.0.

@@ -6,8 +6,9 @@
 fn build_bindings() {
     use std::{env, path::Path};
 
-    // The pure-C adapter headers live in the workspace root's `adapter/`.
-    let shim_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../adapter");
+    // The pure-C adapter is vendored inside this crate (cargo only packages
+    // files below the crate root, so it cannot live at the workspace root).
+    let shim_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("adapter");
     let shim_dir = shim_dir.to_string_lossy();
 
     // Generate Rust FFI bindings from the adapter's self-contained public C

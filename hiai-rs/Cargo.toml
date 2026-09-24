@@ -7,10 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "Safe Rust bindings for Huawei Ascend NPUs using the HiAI (CANN) DDK on OpenHarmony"
 readme = "../README.md"
-keywords = ["ascend", "cann", "hiai", "npu", "huawei", "inference"]
+keywords = ["ascend", "cann", "hiai", "npu", "inference"]
 categories = ["api-bindings", "hardware-support"]
 
 [dependencies]
-hiai-rs-sys = { path = "../hiai-rs-sys" }
+hiai-rs-sys = { version = "0.1.0", path = "../hiai-rs-sys" }
 log = "0.4"
 thiserror = "2.0"

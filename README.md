@@ -13,7 +13,7 @@ Rust bindings for Huawei Ascend NPUs using the HiAI (CANN) DDK on OpenHarmony â€
 
 ## What it wraps
 
-The HiAI DDK is Huawei's `libhiai` runtime (part of the CANN stack) for OpenHarmony devices with Ascend NPUs. This crate binds a thin **pure-C adapter** (`adapter/`) that wraps the DDK's C++ API (`hiai::op::*`, the GE graph engine, and the model manager) so it can be called from Rust.
+The HiAI DDK is Huawei's `libhiai` runtime (part of the CANN stack) for OpenHarmony devices with Ascend NPUs. This crate binds a thin **pure-C adapter** (`hiai-rs-sys/adapter/`) that wraps the DDK's C++ API (`hiai::op::*`, the GE graph engine, and the model manager) so it can be called from Rust.
 
 - **Graph build** (WebNN â†’ CANN IR) lives in [rustnn](https://github.com/rustnn/rustnn); this crate only binds the low-level FFI and model dispatch.
 - The adapter is compiled and `libhiai` is linked **only** when cross-compiling for OpenHarmony (`aarch64-unknown-linux-ohos`).
@@ -69,7 +69,7 @@ dispatch(model_bytes, &inputs, &mut outputs)?;
 
 ## Attribution
 
-The C++ adapter under `adapter/` is a local pure-C shim over the HiAI DDK. It is licensed under Apache-2.0 (see each file's SPDX header).
+The C++ adapter under `hiai-rs-sys/adapter/` is a local pure-C shim over the HiAI DDK. It is licensed under Apache-2.0 (see each file's SPDX header).
 
 ## License
 
