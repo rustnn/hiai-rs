@@ -4,14 +4,14 @@
 
 hiai-rs binds Huawei's HiAI (CANN) DDK (`libhiai`) so Rust can build and run neural-network graphs on Ascend NPUs from OpenHarmony.
 
-The DDK's native API is C++ (`hiai::op::*` operators, the GE graph engine, and the model manager). Rust cannot call those classes directly, so this crate ships a **pure-C adapter** (`adapter/`) that wraps the DDK into `extern "C"` functions (`cann_*`) over opaque handles (`Cann*`).
+The DDK's native API is C++ (`hiai::op::*` operators, the GE graph engine, and the model manager). Rust cannot call those classes directly, so this crate ships a **pure-C adapter** (`hiai-rs-sys/adapter/`) that wraps the DDK into `extern "C"` functions (`cann_*`) over opaque handles (`Cann*`).
 
 ## Why bindgen
 
 We use `bindgen` to generate Rust bindings for the **flat pure-C API** exposed by the HiAI adapter.
 
 ```
-adapter/*.h  ──bindgen──►  OUT_DIR/cann_bindings.rs  ──include!──►  hiai_rs_sys::sys
+hiai-rs-sys/adapter/*.h  ──bindgen──►  OUT_DIR/cann_bindings.rs  ──include!──►  hiai_rs_sys::sys
 adapter/*.cc ──cc───────►  compiled adapter          ──link──────►  libhiai (OHOS only)
 ```
 
